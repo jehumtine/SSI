@@ -13,7 +13,7 @@ class IdentityRegistry:
     where each leaf node is an identity's Merkle root
     """
 
-    def __init__(self, storage_dir: str = "./identity_registry"):
+    def __init__(self, storage_dir: str = "./identity_register"):
         self.storage_dir = Path(storage_dir)
         self.storage_dir.mkdir(exist_ok=True, parents=True)
 

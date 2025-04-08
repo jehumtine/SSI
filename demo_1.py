@@ -2,10 +2,10 @@ import json
 
 from cryptography.fernet import Fernet
 
-from main import IdentityRegistry, RegistryVerifier
+from identity_registry import IdentityRegistry, RegistryVerifier
 
 
-def verify_from_json_file(json_path: str, registry_path: str = "./identity_registry") -> dict:
+def verify_from_json_file(json_path: str, registry_path: str = "./identity_register") -> dict:
     """
     Loads and verifies an identity package from JSON file
     """
