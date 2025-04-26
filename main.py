@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
     # Initialize the registry
     registry = IdentityRegistry("identity_register")
-
+    registry.list_identities()
     # Define some sample identities
     documents = [
         {

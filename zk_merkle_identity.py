@@ -56,6 +56,8 @@ class ZKMerkleIdentity:
 
         for i, doc in enumerate(documents):
             # Get attributes to commit to for this document
+            if isinstance(doc, str):
+                doc = json.loads(doc)
             doc_id = doc.get("id", str(i))
             attrs = None
             if selective_attributes and doc_id in selective_attributes:
@@ -85,7 +87,7 @@ class ZKMerkleIdentity:
         return {
             "merkle_root": self.merkle_tree.get_root().hex(),
             "commitments": commitment_data,
-            "documents": [doc.get("id", str(i)) for i, doc in enumerate(documents)],
+            "documents": [(json.loads(doc) if isinstance(doc, str) else doc).get("id", str(i)) for i, doc in enumerate(documents)],
         }
 
     def generate_disclosure_proof(self, document: Dict, attributes_to_disclose: List[str]) -> Dict:

@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Union, Optional
 
-# Define the individual document schemas
 class Passport(BaseModel):
     id: str
     name: str
@@ -28,10 +27,10 @@ class HealthInsurance(BaseModel):
     coverage_details: str
     start_date: str
 
-# Create a unified document type, which can be a Passport, DriverLicense, or HealthInsurance
+
 Document = Union[Passport, DriverLicense, HealthInsurance]
 
-# Define the identity package schema
+
 class IdentityPackage(BaseModel):
     documents: List[Document]
 
