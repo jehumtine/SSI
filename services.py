@@ -1,5 +1,4 @@
 from pathlib import Path
-
 from fontTools.misc.eexec import decrypt
 
 from identity_registry import IdentityRegistry, RegistryVerifier
@@ -35,8 +34,8 @@ async def create_identity(identity_package: IdentityPackage):
 
     identity_data = identity.create_identity(response_data)
     id = random.randint(1, 1000)
-    registry.register_identity(id, identity,{"type": "individual", "country": "ZM"})
-    user_package = identity.generate_user_package(identity_data)
+    identity_info = registry.register_identity(id, identity,{"type": "individual", "country": "ZM"})
+    user_package = identity.generate_user_package(identity_data, registry.generate_registry_proof(identity_info['identity_id']))
     key = Fernet.generate_key()
     cipher = Fernet(key)
     encrypted_package = cipher.encrypt(json.dumps(user_package).encode())
@@ -53,4 +52,5 @@ async def verify_identity(user_package: UserPackage):
     cipher = Fernet(key)
     decrypted_pkg = cipher.decrypt(encrypted_pkg)
     package = json.loads(decrypted_pkg.decode('utf-8'))
+    print(package)
     return RegistryVerifier.verify_user_package(registry, package)

@@ -97,7 +97,7 @@ class IdentityRegistry:
         # Save registry state
         self._save_registry()
 
-        return str(identity_path)
+        return self.registry_data[commitment.hex()]
 
     def get_registry_root(self) -> str:
         """Get the current registry Merkle root"""
@@ -216,8 +216,9 @@ class RegistryVerifier:
             }
 
         # 3. Generate registry proof
-        registry_proof = registry.generate_registry_proof(identity_info['identity_id'])
-
+        registry_proof = user_package["proof"]
+        print("identity_info" + str(identity_info))
+        print("registry_proof" + str(registry_proof))
         # 4. Verify against registry
         is_valid = registry.verify_identity_in_registry(
             identity_root=user_root,

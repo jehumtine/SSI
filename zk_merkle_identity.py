@@ -140,7 +140,7 @@ class ZKMerkleIdentity:
             "blinded_salt": hashlib.sha256(self.salt_cache[commitment_hex]["salt"]).digest().hex()
         }
 
-    def generate_user_package(self, identity_data: Dict) -> Dict:
+    def generate_user_package(self, identity_data: Dict, registry_identity_info: Dict) -> Dict:
         """Package identity data for user storage"""
         return {
             "version": "1.0",
@@ -153,7 +153,8 @@ class ZKMerkleIdentity:
                 }
                 for commit_hex, data in identity_data["commitments"].items()
                 for doc_id in [data["document_id"]]
-            }
+            },
+            "proof": registry_identity_info
         }
 
     def verify_disclosure(self, proof: Dict, expected_root: str) -> bool:
@@ -187,7 +188,7 @@ class ZKMerkleIdentity:
         root_bytes = bytes.fromhex(expected_root)
         return current == root_bytes
 
-    def save_identity(self, filepath: str) -> None:
+    def save_identity(self, filepath: str):
         """
         Save the identity system to a file, including the Merkle tree and salt cache.
 
@@ -214,6 +215,8 @@ class ZKMerkleIdentity:
             pickle.dump(data, file)
 
         print(f"Identity saved to {filepath}")
+        return data
+
 
     def load_identity(self, filepath: str) -> None:
         """
