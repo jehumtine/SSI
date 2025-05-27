@@ -35,7 +35,7 @@ async def create_identity(identity_package: IdentityPackage):
     identity_data = identity.create_identity(response_data)
     id = random.randint(1, 1000)
     identity_info = registry.register_identity(id, identity,{"type": "individual", "country": "ZM"})
-    user_package = identity.generate_user_package(identity_data, registry.generate_registry_proof(identity_info['identity_id']))
+    user_package = identity.generate_user_package(identity_data, registry.generate_registry_proof(identity_info['identity_id']), identity_info['stamp'])
     key = Fernet.generate_key()
     cipher = Fernet(key)
     encrypted_package = cipher.encrypt(json.dumps(user_package).encode())

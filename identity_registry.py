@@ -75,6 +75,8 @@ class IdentityRegistry:
         identity_root_hex = identity.get_merkle_root()
         identity_root_bytes = bytes.fromhex(identity_root_hex)
 
+        # Mark the registry version
+        stamp = len(self.identity_roots)
         # Create commitment for the identity root
         salt = secrets.token_bytes(32)
         commitment = hashlib.sha256(identity_root_bytes + salt).digest()
@@ -88,11 +90,20 @@ class IdentityRegistry:
             'identity_path': str(identity_path),
             'metadata': metadata or {},
             'registered_at': datetime.datetime.now().isoformat(),
+            'stamp': stamp, # record stamp index
             'salt': salt.hex()
         }
 
         # Rebuild registry Merkle tree
         self.registry_tree = MerkleTree(self.identity_roots)
+
+        #Attach a real Merkle-proof for this leaf in that stamp
+        stamp = MerkleTree(self.identity_roots[:stamp+1])
+        tree_proof = stamp.get_proof(commitment)
+        self.registry_data[commitment.hex()]['merkle_proof'] = {
+            'path_elements': [p['data'].hex() for p in tree_proof],
+            'path_positions': [p['position'] for p in tree_proof],
+        }
 
         # Save registry state
         self._save_registry()
@@ -105,16 +116,18 @@ class IdentityRegistry:
             return ""
         return self.registry_tree.get_root().hex()
 
-    def verify_identity_in_registry(self, identity_root: str, proof: Dict) -> bool:
+    def verify_identity_in_registry(self, identity_root: str, proof: Dict, stamp: int) -> bool:
         """
         Verify that an identity root is properly committed in the registry
         Proof should contain both the salt and Merkle proof components
         """
+        snapshot_leaves = self.identity_roots[: stamp+1]
+        tree = MerkleTree(snapshot_leaves)
         # Reconstruct commitment
         try:
             salt = bytes.fromhex(proof['salt'])
-            identity_root_bytes = bytes.fromhex(identity_root)
-            commitment = hashlib.sha256(identity_root_bytes + salt).digest()
+            root_b = bytes.fromhex(identity_root)
+            current = hashlib.sha256(root_b + salt).digest()
         except:
             return False
 
@@ -122,20 +135,14 @@ class IdentityRegistry:
         if not self.registry_tree:
             return False
 
-        merkle_proof = [
-            {'data': bytes.fromhex(p), 'position': pos}
-            for p, pos in zip(proof['path_elements'], proof['path_positions'])
-        ]
-
-        current = commitment
-        for step in merkle_proof:
-            sibling = step['data']
-            if step['position'] == 'left':
-                current = hashlib.sha256(sibling + current).digest()
+        for elem, pos in zip(proof['path_elements'], proof['path_positions']):
+            sib = bytes.fromhex(elem)
+            if pos == 'left':
+                current = hashlib.sha256(sib + current).digest()
             else:
-                current = hashlib.sha256(current + sibling).digest()
+                current = hashlib.sha256(current + sib).digest()
 
-        return current == self.registry_tree.get_root()
+        return current == tree.get_root()
 
     def generate_registry_proof(self, identity_id: str) -> Dict:
         """Generate inclusion proof for an identity in the registry"""
@@ -226,7 +233,8 @@ class RegistryVerifier:
                 'salt': registry_proof['salt'],
                 'path_elements': registry_proof['path_elements'],
                 'path_positions': registry_proof['path_positions']
-            }
+            },
+            stamp=user_package['stamp']
         )
 
         return {
